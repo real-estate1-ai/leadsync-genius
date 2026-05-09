@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedLeadsNewRouteImport } from './routes/_authenticated/leads.new'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -45,20 +46,27 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedLeadsNewRoute = AuthenticatedLeadsNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AuthenticatedLeadsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/leads': typeof AuthenticatedLeadsRoute
+  '/leads': typeof AuthenticatedLeadsRouteWithChildren
+  '/leads/new': typeof AuthenticatedLeadsNewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/leads': typeof AuthenticatedLeadsRoute
+  '/leads': typeof AuthenticatedLeadsRouteWithChildren
+  '/leads/new': typeof AuthenticatedLeadsNewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -67,13 +75,14 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/_authenticated/leads': typeof AuthenticatedLeadsRoute
+  '/_authenticated/leads': typeof AuthenticatedLeadsRouteWithChildren
+  '/_authenticated/leads/new': typeof AuthenticatedLeadsNewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/signup' | '/dashboard' | '/leads'
+  fullPaths: '/' | '/login' | '/signup' | '/dashboard' | '/leads' | '/leads/new'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/signup' | '/dashboard' | '/leads'
+  to: '/' | '/login' | '/signup' | '/dashboard' | '/leads' | '/leads/new'
   id:
     | '__root__'
     | '/'
@@ -82,6 +91,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/_authenticated/dashboard'
     | '/_authenticated/leads'
+    | '/_authenticated/leads/new'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -135,17 +145,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/leads/new': {
+      id: '/_authenticated/leads/new'
+      path: '/new'
+      fullPath: '/leads/new'
+      preLoaderRoute: typeof AuthenticatedLeadsNewRouteImport
+      parentRoute: typeof AuthenticatedLeadsRoute
+    }
   }
 }
 
+interface AuthenticatedLeadsRouteChildren {
+  AuthenticatedLeadsNewRoute: typeof AuthenticatedLeadsNewRoute
+}
+
+const AuthenticatedLeadsRouteChildren: AuthenticatedLeadsRouteChildren = {
+  AuthenticatedLeadsNewRoute: AuthenticatedLeadsNewRoute,
+}
+
+const AuthenticatedLeadsRouteWithChildren =
+  AuthenticatedLeadsRoute._addFileChildren(AuthenticatedLeadsRouteChildren)
+
 interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
+  AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRouteWithChildren
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
+  AuthenticatedLeadsRoute: AuthenticatedLeadsRouteWithChildren,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
