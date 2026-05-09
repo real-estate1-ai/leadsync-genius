@@ -1,8 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, type FormEvent } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { signIn } from "@/lib/auth.functions";
+import { persistSupabaseSession } from "@/lib/supabase-session";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,11 +31,7 @@ function Login() {
         return;
       }
       if (result.session) {
-        try {
-          await supabase.auth.setSession(result.session);
-        } catch {
-          // Preview env may block this fetch; session will hydrate on next load.
-        }
+        persistSupabaseSession(result.session);
       }
       toast.success("Welcome back!");
       nav({ to: "/dashboard" });
