@@ -53,7 +53,7 @@ function NewLead() {
       priority: form.priority,
       notes: form.notes || null,
     };
-    const { error, data } = await supabase.from("leads").insert(payload).select().single();
+    const { error, data } = await supabase.from("leads").insert(payload as any).select().single();
     setLoading(false);
     if (error) return toast.error(error.message);
     toast.success("Lead added");
