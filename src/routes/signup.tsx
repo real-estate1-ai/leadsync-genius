@@ -25,17 +25,28 @@ function Signup() {
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
+
+    // Client-side validation to avoid server-side throws
+    if (!name.trim()) return toast.error("Full name is required");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return toast.error("Enter a valid email address");
+    if (password.length < 6) return toast.error("Password must be at least 6 characters");
+
     setLoading(true);
     try {
       const result = await createAccountOnServer({
         data: {
-          name,
-          phone,
-          email,
+          name: name.trim(),
+          phone: phone.trim(),
+          email: email.trim(),
           password,
           redirectTo: window.location.origin + "/dashboard",
         },
       });
+
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
 
       if (result.session) {
         const { error } = await supabase.auth.setSession(result.session);

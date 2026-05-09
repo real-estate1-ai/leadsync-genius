@@ -12,8 +12,17 @@ const signupSchema = z.object({
 });
 
 export const createAccount = createServerFn({ method: "POST" })
-  .inputValidator((input) => signupSchema.parse(input))
+  .inputValidator((input: unknown) => {
+    const parsed = signupSchema.safeParse(input);
+    if (!parsed.success) {
+      return { __error: parsed.error.issues[0]?.message ?? "Invalid input" } as never;
+    }
+    return parsed.data;
+  })
   .handler(async ({ data }) => {
+    if ((data as any).__error) {
+      return { ok: false as const, error: (data as any).__error };
+    }
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabasePublishableKey = process.env.SUPABASE_PUBLISHABLE_KEY;
 
@@ -42,15 +51,13 @@ export const createAccount = createServerFn({ method: "POST" })
     });
 
     if (error) {
-      throw new Error(error.message);
+      return { ok: false as const, error: error.message };
     }
 
     return {
+      ok: true as const,
       user: result.user
-        ? {
-            id: result.user.id,
-            email: result.user.email ?? data.email,
-          }
+        ? { id: result.user.id, email: result.user.email ?? data.email }
         : null,
       session: result.session
         ? {
