@@ -40,7 +40,7 @@ function NewLead() {
     e.preventDefault();
     if (!user) return;
     setLoading(true);
-    const payload: Record<string, unknown> = {
+    const payload = {
       agent_id: user.id,
       name: form.name,
       phone: form.phone,
