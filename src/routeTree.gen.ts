@@ -9,38 +9,241 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedRemindersRouteImport } from './routes/_authenticated/reminders'
+import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedLeadsNewRouteImport } from './routes/_authenticated/leads.new'
+import { Route as AuthenticatedLeadsIdRouteImport } from './routes/_authenticated/leads.$id'
+import { Route as ApiPublicWebhookWhatsappTokenRouteImport } from './routes/api/public/webhook.whatsapp.$token'
+import { Route as ApiPublicWebhookMetaTokenRouteImport } from './routes/api/public/webhook.meta.$token'
 
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedRemindersRoute = AuthenticatedRemindersRouteImport.update({
+  id: '/reminders',
+  path: '/reminders',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedLeadsRoute = AuthenticatedLeadsRouteImport.update({
+  id: '/leads',
+  path: '/leads',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedLeadsNewRoute = AuthenticatedLeadsNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AuthenticatedLeadsRoute,
+} as any)
+const AuthenticatedLeadsIdRoute = AuthenticatedLeadsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuthenticatedLeadsRoute,
+} as any)
+const ApiPublicWebhookWhatsappTokenRoute =
+  ApiPublicWebhookWhatsappTokenRouteImport.update({
+    id: '/api/public/webhook/whatsapp/$token',
+    path: '/api/public/webhook/whatsapp/$token',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicWebhookMetaTokenRoute =
+  ApiPublicWebhookMetaTokenRouteImport.update({
+    id: '/api/public/webhook/meta/$token',
+    path: '/api/public/webhook/meta/$token',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/pricing': typeof PricingRoute
+  '/signup': typeof SignupRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/analytics': typeof AuthenticatedAnalyticsRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/leads': typeof AuthenticatedLeadsRouteWithChildren
+  '/reminders': typeof AuthenticatedRemindersRoute
+  '/settings': typeof AuthenticatedSettingsRoute
+  '/leads/$id': typeof AuthenticatedLeadsIdRoute
+  '/leads/new': typeof AuthenticatedLeadsNewRoute
+  '/api/public/webhook/meta/$token': typeof ApiPublicWebhookMetaTokenRoute
+  '/api/public/webhook/whatsapp/$token': typeof ApiPublicWebhookWhatsappTokenRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/pricing': typeof PricingRoute
+  '/signup': typeof SignupRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/analytics': typeof AuthenticatedAnalyticsRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/leads': typeof AuthenticatedLeadsRouteWithChildren
+  '/reminders': typeof AuthenticatedRemindersRoute
+  '/settings': typeof AuthenticatedSettingsRoute
+  '/leads/$id': typeof AuthenticatedLeadsIdRoute
+  '/leads/new': typeof AuthenticatedLeadsNewRoute
+  '/api/public/webhook/meta/$token': typeof ApiPublicWebhookMetaTokenRoute
+  '/api/public/webhook/whatsapp/$token': typeof ApiPublicWebhookWhatsappTokenRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/login': typeof LoginRoute
+  '/pricing': typeof PricingRoute
+  '/signup': typeof SignupRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/leads': typeof AuthenticatedLeadsRouteWithChildren
+  '/_authenticated/reminders': typeof AuthenticatedRemindersRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/leads/$id': typeof AuthenticatedLeadsIdRoute
+  '/_authenticated/leads/new': typeof AuthenticatedLeadsNewRoute
+  '/api/public/webhook/meta/$token': typeof ApiPublicWebhookMetaTokenRoute
+  '/api/public/webhook/whatsapp/$token': typeof ApiPublicWebhookWhatsappTokenRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/pricing'
+    | '/signup'
+    | '/admin'
+    | '/analytics'
+    | '/dashboard'
+    | '/leads'
+    | '/reminders'
+    | '/settings'
+    | '/leads/$id'
+    | '/leads/new'
+    | '/api/public/webhook/meta/$token'
+    | '/api/public/webhook/whatsapp/$token'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/login'
+    | '/pricing'
+    | '/signup'
+    | '/admin'
+    | '/analytics'
+    | '/dashboard'
+    | '/leads'
+    | '/reminders'
+    | '/settings'
+    | '/leads/$id'
+    | '/leads/new'
+    | '/api/public/webhook/meta/$token'
+    | '/api/public/webhook/whatsapp/$token'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/login'
+    | '/pricing'
+    | '/signup'
+    | '/_authenticated/admin'
+    | '/_authenticated/analytics'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/leads'
+    | '/_authenticated/reminders'
+    | '/_authenticated/settings'
+    | '/_authenticated/leads/$id'
+    | '/_authenticated/leads/new'
+    | '/api/public/webhook/meta/$token'
+    | '/api/public/webhook/whatsapp/$token'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  LoginRoute: typeof LoginRoute
+  PricingRoute: typeof PricingRoute
+  SignupRoute: typeof SignupRoute
+  ApiPublicWebhookMetaTokenRoute: typeof ApiPublicWebhookMetaTokenRoute
+  ApiPublicWebhookWhatsappTokenRoute: typeof ApiPublicWebhookWhatsappTokenRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +251,123 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/reminders': {
+      id: '/_authenticated/reminders'
+      path: '/reminders'
+      fullPath: '/reminders'
+      preLoaderRoute: typeof AuthenticatedRemindersRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/leads': {
+      id: '/_authenticated/leads'
+      path: '/leads'
+      fullPath: '/leads'
+      preLoaderRoute: typeof AuthenticatedLeadsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/analytics': {
+      id: '/_authenticated/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/leads/new': {
+      id: '/_authenticated/leads/new'
+      path: '/new'
+      fullPath: '/leads/new'
+      preLoaderRoute: typeof AuthenticatedLeadsNewRouteImport
+      parentRoute: typeof AuthenticatedLeadsRoute
+    }
+    '/_authenticated/leads/$id': {
+      id: '/_authenticated/leads/$id'
+      path: '/$id'
+      fullPath: '/leads/$id'
+      preLoaderRoute: typeof AuthenticatedLeadsIdRouteImport
+      parentRoute: typeof AuthenticatedLeadsRoute
+    }
+    '/api/public/webhook/whatsapp/$token': {
+      id: '/api/public/webhook/whatsapp/$token'
+      path: '/api/public/webhook/whatsapp/$token'
+      fullPath: '/api/public/webhook/whatsapp/$token'
+      preLoaderRoute: typeof ApiPublicWebhookWhatsappTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/webhook/meta/$token': {
+      id: '/api/public/webhook/meta/$token'
+      path: '/api/public/webhook/meta/$token'
+      fullPath: '/api/public/webhook/meta/$token'
+      preLoaderRoute: typeof ApiPublicWebhookMetaTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface AuthenticatedLeadsRouteChildren {
+  AuthenticatedLeadsIdRoute: typeof AuthenticatedLeadsIdRoute
+  AuthenticatedLeadsNewRoute: typeof AuthenticatedLeadsNewRoute
+}
+
+const AuthenticatedLeadsRouteChildren: AuthenticatedLeadsRouteChildren = {
+  AuthenticatedLeadsIdRoute: AuthenticatedLeadsIdRoute,
+  AuthenticatedLeadsNewRoute: AuthenticatedLeadsNewRoute,
+}
+
+const AuthenticatedLeadsRouteWithChildren =
+  AuthenticatedLeadsRoute._addFileChildren(AuthenticatedLeadsRouteChildren)
+
+interface AuthenticatedRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRouteWithChildren
+  AuthenticatedRemindersRoute: typeof AuthenticatedRemindersRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+}
+
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedLeadsRoute: AuthenticatedLeadsRouteWithChildren,
+  AuthenticatedRemindersRoute: AuthenticatedRemindersRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+}
+
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  LoginRoute: LoginRoute,
+  PricingRoute: PricingRoute,
+  SignupRoute: SignupRoute,
+  ApiPublicWebhookMetaTokenRoute: ApiPublicWebhookMetaTokenRoute,
+  ApiPublicWebhookWhatsappTokenRoute: ApiPublicWebhookWhatsappTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
