@@ -63,6 +63,10 @@ export const createAccount = createServerFn({ method: "POST" })
         ? {
             access_token: result.session.access_token,
             refresh_token: result.session.refresh_token,
+            expires_at: result.session.expires_at,
+            expires_in: result.session.expires_in,
+            token_type: result.session.token_type,
+            user: result.session.user,
           }
         : null,
     };
@@ -107,6 +111,10 @@ export const signIn = createServerFn({ method: "POST" })
         ? {
             access_token: result.session.access_token,
             refresh_token: result.session.refresh_token,
+            expires_at: result.session.expires_at,
+            expires_in: result.session.expires_in,
+            token_type: result.session.token_type,
+            user: result.session.user,
           }
         : null,
     };
