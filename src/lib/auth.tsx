@@ -36,12 +36,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const loadProfile = async (uid: string) => {
-    const [{ data: p }, { data: roles }] = await Promise.all([
-      supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
-      supabase.from("user_roles").select("role").eq("user_id", uid),
-    ]);
-    setProfile(p as Profile | null);
-    setIsAdmin(!!roles?.some((r) => r.role === "admin"));
+    try {
+      const [{ data: p }, { data: roles }] = await Promise.all([
+        supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
+        supabase.from("user_roles").select("role").eq("user_id", uid),
+      ]);
+      setProfile(p as Profile | null);
+      setIsAdmin(!!roles?.some((r) => r.role === "admin"));
+    } catch {
+      setProfile(null);
+      setIsAdmin(false);
+    }
   };
 
   useEffect(() => {
@@ -56,16 +61,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
-      setSession(s);
-      if (s?.user) {
-        setTimeout(() => loadProfile(s.user.id), 0);
-      } else {
-        setProfile(null);
-        setIsAdmin(false);
-      }
-    });
-
     const storedSession = readPersistedSupabaseSession();
     hydrate(storedSession);
 
@@ -73,7 +68,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.addEventListener(SUPABASE_SESSION_EVENT, onManualSession);
 
     return () => {
-      sub.subscription.unsubscribe();
       window.removeEventListener(SUPABASE_SESSION_EVENT, onManualSession);
     };
   }, []);
