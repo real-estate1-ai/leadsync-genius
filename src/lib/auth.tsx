@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session, User } from "@supabase/supabase-js";
+import { clearSupabaseSession, readPersistedSupabaseSession, SUPABASE_SESSION_EVENT } from "@/lib/supabase-session";
 
 type Profile = {
   id: string;
@@ -44,6 +45,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    const hydrate = (s: Session | null) => {
+      setSession(s);
+      if (s?.user) {
+        loadProfile(s.user.id).finally(() => setLoading(false));
+      } else {
+        setProfile(null);
+        setIsAdmin(false);
+        setLoading(false);
+      }
+    };
+
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
       setSession(s);
       if (s?.user) {
@@ -54,13 +66,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      if (data.session?.user) loadProfile(data.session.user.id).finally(() => setLoading(false));
-      else setLoading(false);
-    });
+    const storedSession = readPersistedSupabaseSession();
+    hydrate(storedSession);
 
-    return () => sub.subscription.unsubscribe();
+    const onManualSession = (event: Event) => hydrate((event as CustomEvent<Session | null>).detail);
+    window.addEventListener(SUPABASE_SESSION_EVENT, onManualSession);
+
+    return () => {
+      sub.subscription.unsubscribe();
+      window.removeEventListener(SUPABASE_SESSION_EVENT, onManualSession);
+    };
   }, []);
 
   const refreshProfile = async () => {
@@ -68,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    clearSupabaseSession();
   };
 
   return (
