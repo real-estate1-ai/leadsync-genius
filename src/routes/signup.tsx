@@ -1,6 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { createAccount } from "@/lib/auth.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +16,7 @@ export const Route = createFileRoute("/signup")({
 
 function Signup() {
   const nav = useNavigate();
+  const createAccountOnServer = useServerFn(createAccount);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -23,18 +26,32 @@ function Signup() {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { name, phone },
-        emailRedirectTo: window.location.origin + "/dashboard",
-      },
-    });
-    setLoading(false);
-    if (error) return toast.error(error.message);
-    toast.success("Account created — welcome!");
-    nav({ to: "/dashboard" });
+    try {
+      const result = await createAccountOnServer({
+        data: {
+          name,
+          phone,
+          email,
+          password,
+          redirectTo: window.location.origin + "/dashboard",
+        },
+      });
+
+      if (result.session) {
+        const { error } = await supabase.auth.setSession(result.session);
+        if (error) throw error;
+        toast.success("Account created — welcome!");
+        nav({ to: "/dashboard" });
+        return;
+      }
+
+      toast.success("Account created. Please check your email to verify it.");
+      nav({ to: "/login" });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not create account");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
