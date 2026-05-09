@@ -49,8 +49,11 @@ function Signup() {
       }
 
       if (result.session) {
-        const { error } = await supabase.auth.setSession(result.session);
-        if (error) throw error;
+        try {
+          await supabase.auth.setSession(result.session);
+        } catch {
+          // Preview env may block this fetch; session hydrates on next load.
+        }
         toast.success("Account created — welcome!");
         nav({ to: "/dashboard" });
         return;

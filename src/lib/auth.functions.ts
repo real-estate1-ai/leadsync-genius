@@ -67,3 +67,47 @@ export const createAccount = createServerFn({ method: "POST" })
         : null,
     };
   });
+const loginSchema = z.object({
+  email: z.string().trim().email("Enter a valid email address"),
+  password: z.string().min(1, "Password is required"),
+});
+
+export const signIn = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => {
+    const parsed = loginSchema.safeParse(input);
+    if (!parsed.success) {
+      return { __error: parsed.error.issues[0]?.message ?? "Invalid input" } as never;
+    }
+    return parsed.data;
+  })
+  .handler(async ({ data }) => {
+    if ((data as any).__error) {
+      return { ok: false as const, error: (data as any).__error };
+    }
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabasePublishableKey = process.env.SUPABASE_PUBLISHABLE_KEY;
+    if (!supabaseUrl || !supabasePublishableKey) {
+      return { ok: false as const, error: "Authentication is not configured yet." };
+    }
+
+    const serverSupabase = createClient<Database>(supabaseUrl, supabasePublishableKey, {
+      auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+    });
+
+    const { data: result, error } = await serverSupabase.auth.signInWithPassword({
+      email: data.email,
+      password: data.password,
+    });
+
+    if (error) return { ok: false as const, error: error.message };
+
+    return {
+      ok: true as const,
+      session: result.session
+        ? {
+            access_token: result.session.access_token,
+            refresh_token: result.session.refresh_token,
+          }
+        : null,
+    };
+  });
