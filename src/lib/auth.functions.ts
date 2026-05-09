@@ -51,15 +51,13 @@ export const createAccount = createServerFn({ method: "POST" })
     });
 
     if (error) {
-      throw new Error(error.message);
+      return { ok: false as const, error: error.message };
     }
 
     return {
+      ok: true as const,
       user: result.user
-        ? {
-            id: result.user.id,
-            email: result.user.email ?? data.email,
-          }
+        ? { id: result.user.id, email: result.user.email ?? data.email }
         : null,
       session: result.session
         ? {
