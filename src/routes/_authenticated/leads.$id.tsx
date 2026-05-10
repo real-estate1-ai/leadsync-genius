@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { supabase } from "@/integrations/supabase/client";
+import { addReminder, deleteLead, getLeadDetail, toggleReminder, updateLead } from "@/lib/app-data.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,7 +25,12 @@ type Reminder = { id: string; reminder_at: string; note: string | null; is_done:
 
 function LeadDetail() {
   const { id } = Route.useParams();
-  const { user } = useAuth();
+  const { session } = useAuth();
+  const getLeadDetailOnServer = useServerFn(getLeadDetail);
+  const updateLeadOnServer = useServerFn(updateLead);
+  const deleteLeadOnServer = useServerFn(deleteLead);
+  const addReminderOnServer = useServerFn(addReminder);
+  const toggleReminderOnServer = useServerFn(toggleReminder);
   const nav = useNavigate();
   const [lead, setLead] = useState<Lead | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -34,18 +40,15 @@ function LeadDetail() {
   const [reminderNote, setReminderNote] = useState("");
 
   const load = async () => {
-    const [{ data: l }, { data: a }, { data: r }] = await Promise.all([
-      supabase.from("leads").select("*").eq("id", id).maybeSingle(),
-      supabase.from("activities").select("*").eq("lead_id", id).order("created_at", { ascending: false }),
-      supabase.from("reminders").select("*").eq("lead_id", id).order("reminder_at"),
-    ]);
-    setLead(l);
-    setActivities((a || []) as Activity[]);
-    setReminders((r || []) as Reminder[]);
+    if (!session?.access_token) return;
+    const result = await getLeadDetailOnServer({ data: { accessToken: session.access_token, id } });
+    setLead(result.lead);
+    setActivities(result.activities as Activity[]);
+    setReminders(result.reminders as Reminder[]);
     setLoading(false);
   };
 
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [id]);
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [id, session?.access_token]);
 
   if (loading) return <div className="p-8 text-center text-muted-foreground">Loading…</div>;
   if (!lead) return <div className="p-8 text-center">Lead not found.</div>;
@@ -53,37 +56,43 @@ function LeadDetail() {
   const update = (k: string, v: any) => setLead({ ...lead, [k]: v });
 
   const save = async () => {
-    const { error } = await supabase.from("leads").update({
-      name: lead.name, phone: lead.phone, whatsapp: lead.whatsapp, email: lead.email,
-      status: lead.status, priority: lead.priority, property_interest: lead.property_interest,
-      budget_range: lead.budget_range, location_preference: lead.location_preference, notes: lead.notes,
-    } as any).eq("id", id);
-    if (error) return toast.error(error.message);
-    toast.success("Saved");
-    load();
+    if (!session?.access_token) return;
+    try {
+      await updateLeadOnServer({ data: { accessToken: session.access_token, id, ...lead } });
+      toast.success("Saved");
+      load();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not save lead");
+    }
   };
 
   const del = async () => {
     if (!confirm("Delete this lead permanently?")) return;
-    const { error } = await supabase.from("leads").delete().eq("id", id);
-    if (error) return toast.error(error.message);
-    toast.success("Deleted");
-    nav({ to: "/leads" });
+    if (!session?.access_token) return;
+    try {
+      await deleteLeadOnServer({ data: { accessToken: session.access_token, id } });
+      toast.success("Deleted");
+      nav({ to: "/leads" });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not delete lead");
+    }
   };
 
   const addReminder = async () => {
-    if (!reminderAt || !user) return;
-    const { error } = await supabase.from("reminders").insert({
-      lead_id: id, agent_id: user.id, reminder_at: new Date(reminderAt).toISOString(), note: reminderNote || null,
-    });
-    if (error) return toast.error(error.message);
-    setReminderAt(""); setReminderNote("");
-    toast.success("Reminder set");
-    load();
+    if (!reminderAt || !session?.access_token) return;
+    try {
+      await addReminderOnServer({ data: { accessToken: session.access_token, id, reminder_at: new Date(reminderAt).toISOString(), note: reminderNote } });
+      setReminderAt(""); setReminderNote("");
+      toast.success("Reminder set");
+      load();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not set reminder");
+    }
   };
 
   const toggleReminder = async (r: Reminder) => {
-    await supabase.from("reminders").update({ is_done: !r.is_done }).eq("id", r.id);
+    if (!session?.access_token) return;
+    await toggleReminderOnServer({ data: { accessToken: session.access_token, reminderId: r.id, is_done: !r.is_done } });
     load();
   };
 
