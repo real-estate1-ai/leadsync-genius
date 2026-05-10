@@ -1,19 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { supabase } from "@/integrations/supabase/client";
+import { listLeads } from "@/lib/app-data.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LEAD_STATUS, LEAD_SOURCE } from "@/lib/constants";
 
 export const Route = createFileRoute("/_authenticated/analytics")({ component: Analytics });
 
 function Analytics() {
-  const { user } = useAuth();
+  const { session } = useAuth();
+  const listLeadsOnServer = useServerFn(listLeads);
   const [leads, setLeads] = useState<any[]>([]);
   useEffect(() => {
-    if (!user) return;
-    supabase.from("leads").select("*").eq("agent_id", user.id).then(({ data }) => setLeads(data || []));
-  }, [user]);
+    if (!session?.access_token) return;
+    listLeadsOnServer({ data: { accessToken: session.access_token } }).then((data) => setLeads(data || []));
+  }, [session?.access_token, listLeadsOnServer]);
 
   const bySource = LEAD_SOURCE.map((s) => ({ ...s, count: leads.filter((l) => l.source === s.value).length }));
   const byStatus = LEAD_STATUS.map((s) => ({ ...s, count: leads.filter((l) => l.status === s.value).length }));
