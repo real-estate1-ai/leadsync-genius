@@ -2,7 +2,13 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { addReminder, deleteLead, getLeadDetail, toggleReminder, updateLead } from "@/lib/app-data.functions";
+import {
+  addReminder as addReminderFn,
+  deleteLead,
+  getLeadDetail,
+  toggleReminder as toggleReminderFn,
+  updateLead,
+} from "@/lib/app-data.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,8 +35,8 @@ function LeadDetail() {
   const getLeadDetailOnServer = useServerFn(getLeadDetail);
   const updateLeadOnServer = useServerFn(updateLead);
   const deleteLeadOnServer = useServerFn(deleteLead);
-  const addReminderOnServer = useServerFn(addReminder);
-  const toggleReminderOnServer = useServerFn(toggleReminder);
+  const addReminderOnServer = useServerFn(addReminderFn);
+  const toggleReminderOnServer = useServerFn(toggleReminderFn);
   const nav = useNavigate();
   const [lead, setLead] = useState<Lead | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
