@@ -1,7 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { supabase } from "@/integrations/supabase/client";
+import { getAdminData, setAgentStatus } from "@/lib/app-data.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +11,9 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_authenticated/admin")({ component: Admin });
 
 function Admin() {
-  const { isAdmin, loading } = useAuth();
+  const { isAdmin, loading, session } = useAuth();
+  const getAdminDataOnServer = useServerFn(getAdminData);
+  const setAgentStatusOnServer = useServerFn(setAgentStatus);
   const nav = useNavigate();
   const [agents, setAgents] = useState<any[]>([]);
   const [leadsCount, setLeadsCount] = useState(0);
@@ -20,20 +23,22 @@ function Admin() {
   }, [loading, isAdmin, nav]);
 
   const load = async () => {
-    const [{ data: a }, { count }] = await Promise.all([
-      supabase.from("profiles").select("*").order("created_at", { ascending: false }),
-      supabase.from("leads").select("*", { count: "exact", head: true }),
-    ]);
-    setAgents(a || []);
-    setLeadsCount(count || 0);
+    if (!session?.access_token) return;
+    const data = await getAdminDataOnServer({ data: { accessToken: session.access_token } });
+    setAgents(data.agents || []);
+    setLeadsCount(data.leadsCount || 0);
   };
-  useEffect(() => { if (isAdmin) load(); }, [isAdmin]);
+  useEffect(() => { if (isAdmin) load(); /* eslint-disable-next-line */ }, [isAdmin, session?.access_token]);
 
   const setStatus = async (id: string, status: "active" | "pending" | "inactive") => {
-    const { error } = await supabase.from("profiles").update({ status }).eq("id", id);
-    if (error) return toast.error(error.message);
-    toast.success("Updated");
-    load();
+    if (!session?.access_token) return;
+    try {
+      await setAgentStatusOnServer({ data: { accessToken: session.access_token, id, status } });
+      toast.success("Updated");
+      load();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not update agent");
+    }
   };
 
   if (!isAdmin) return null;
