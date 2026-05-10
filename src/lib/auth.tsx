@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
 import type { Session, User } from "@supabase/supabase-js";
+import { getSessionContext } from "@/lib/app-data.functions";
 import { clearSupabaseSession, readPersistedSupabaseSession, SUPABASE_SESSION_EVENT } from "@/lib/supabase-session";
 
 type Profile = {
@@ -30,19 +31,17 @@ type AuthCtx = {
 const Ctx = createContext<AuthCtx | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const getSessionContextOnServer = useServerFn(getSessionContext);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const loadProfile = async (uid: string) => {
+  const loadProfile = async (accessToken: string) => {
     try {
-      const [{ data: p }, { data: roles }] = await Promise.all([
-        supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
-        supabase.from("user_roles").select("role").eq("user_id", uid),
-      ]);
-      setProfile(p as Profile | null);
-      setIsAdmin(!!roles?.some((r) => r.role === "admin"));
+      const result = await getSessionContextOnServer({ data: { accessToken } });
+      setProfile(result.profile as Profile | null);
+      setIsAdmin(result.isAdmin);
     } catch {
       setProfile(null);
       setIsAdmin(false);
@@ -51,9 +50,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const hydrate = (s: Session | null) => {
+      setLoading(true);
       setSession(s);
       if (s?.user) {
-        loadProfile(s.user.id).finally(() => setLoading(false));
+        loadProfile(s.access_token).finally(() => setLoading(false));
       } else {
         setProfile(null);
         setIsAdmin(false);
@@ -73,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshProfile = async () => {
-    if (session?.user) await loadProfile(session.user.id);
+    if (session?.access_token) await loadProfile(session.access_token);
   };
 
   const signOut = async () => {
