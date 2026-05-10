@@ -9,7 +9,10 @@ const idSchema = authSchema.extend({ id: z.string().uuid() });
 type LeadInsert = Database["public"]["Tables"]["leads"]["Insert"];
 type LeadUpdate = Database["public"]["Tables"]["leads"]["Update"];
 
-const nullableString = z.string().trim().optional().transform((v) => v || null);
+const nullableString = z.preprocess(
+  (value) => (typeof value === "string" ? value.trim() : value),
+  z.string().nullish().transform((value) => value || null),
+);
 
 export const getSessionContext = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => authSchema.parse(input))
