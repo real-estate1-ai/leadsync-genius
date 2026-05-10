@@ -21,7 +21,7 @@ function createSupabaseClient() {
   return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     auth: {
       storage: typeof window !== 'undefined' ? localStorage : undefined,
-      persistSession: false,
+      persistSession: true,
       autoRefreshToken: false,
       detectSessionInUrl: false,
     }
