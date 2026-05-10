@@ -1,7 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useState, type FormEvent } from "react";
 import { useAuth } from "@/lib/auth";
-import { supabase } from "@/integrations/supabase/client";
+import { createLead } from "@/lib/app-data.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,7 +19,8 @@ export const Route = createFileRoute("/_authenticated/leads/new")({
 });
 
 function NewLead() {
-  const { user } = useAuth();
+  const { session } = useAuth();
+  const createLeadOnServer = useServerFn(createLead);
   const nav = useNavigate();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -38,26 +40,17 @@ function NewLead() {
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!session?.access_token) return;
     setLoading(true);
-    const payload = {
-      agent_id: user.id,
-      name: form.name,
-      phone: form.phone,
-      whatsapp: form.whatsapp || null,
-      email: form.email || null,
-      source: form.source,
-      property_interest: form.property_interest || null,
-      location_preference: form.location_preference || null,
-      budget_range: form.budget_range || null,
-      priority: form.priority,
-      notes: form.notes || null,
-    };
-    const { error, data } = await supabase.from("leads").insert(payload as any).select().single();
-    setLoading(false);
-    if (error) return toast.error(error.message);
-    toast.success("Lead added");
-    nav({ to: "/leads/$id", params: { id: data.id } });
+    try {
+      const data = await createLeadOnServer({ data: { accessToken: session.access_token, ...form } });
+      toast.success("Lead added");
+      nav({ to: "/leads/$id", params: { id: data.id } });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not create lead");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { supabase } from "@/integrations/supabase/client";
+import { getDashboardData } from "@/lib/app-data.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,30 +34,28 @@ type Reminder = {
 };
 
 function Dashboard() {
-  const { user, profile } = useAuth();
+  const { session, profile } = useAuth();
+  const getDashboardDataOnServer = useServerFn(getDashboardData);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
+    if (!session?.access_token) return;
+    let alive = true;
     const load = async () => {
-      const [{ data: l }, { data: r }] = await Promise.all([
-        supabase.from("leads").select("*").eq("agent_id", user.id).order("created_at", { ascending: false }),
-        supabase.from("reminders").select("*, leads(name)").eq("agent_id", user.id).eq("is_done", false).order("reminder_at"),
-      ]);
-      setLeads((l || []) as Lead[]);
-      setReminders((r || []) as Reminder[]);
-      setLoading(false);
+      try {
+        const result = await getDashboardDataOnServer({ data: { accessToken: session.access_token } });
+        if (!alive) return;
+        setLeads(result.leads as Lead[]);
+        setReminders(result.reminders as Reminder[]);
+      } finally {
+        if (alive) setLoading(false);
+      }
     };
     load();
-
-    const ch = supabase
-      .channel("dash-leads")
-      .on("postgres_changes", { event: "*", schema: "public", table: "leads", filter: `agent_id=eq.${user.id}` }, load)
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, [user]);
+    return () => { alive = false; };
+  }, [session?.access_token, getDashboardDataOnServer]);
 
   const monthLeads = leads.filter((l) => new Date(l.created_at).getMonth() === new Date().getMonth());
   const closedWon = leads.filter((l) => l.status === "closed_won").length;

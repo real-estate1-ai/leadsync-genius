@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { supabase } from "@/integrations/supabase/client";
+import { listLeads } from "@/lib/app-data.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,7 +30,8 @@ type Lead = {
 };
 
 function LeadsList() {
-  const { user } = useAuth();
+  const { session } = useAuth();
+  const listLeadsOnServer = useServerFn(listLeads);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -38,19 +40,19 @@ function LeadsList() {
   const [priorityF, setPriorityF] = useState("all");
 
   useEffect(() => {
-    if (!user) return;
+    if (!session?.access_token) return;
+    let alive = true;
     const load = async () => {
-      const { data } = await supabase.from("leads").select("*").eq("agent_id", user.id).order("created_at", { ascending: false });
-      setLeads((data || []) as Lead[]);
-      setLoading(false);
+      try {
+        const data = await listLeadsOnServer({ data: { accessToken: session.access_token } });
+        if (alive) setLeads(data as Lead[]);
+      } finally {
+        if (alive) setLoading(false);
+      }
     };
     load();
-    const ch = supabase
-      .channel("leads-list")
-      .on("postgres_changes", { event: "*", schema: "public", table: "leads", filter: `agent_id=eq.${user.id}` }, load)
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, [user]);
+    return () => { alive = false; };
+  }, [session?.access_token, listLeadsOnServer]);
 
   const filtered = useMemo(() => {
     return leads.filter((l) => {

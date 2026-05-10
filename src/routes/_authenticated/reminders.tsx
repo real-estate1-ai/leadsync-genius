@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { supabase } from "@/integrations/supabase/client";
+import { listReminders, toggleReminder } from "@/lib/app-data.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,16 +14,22 @@ export const Route = createFileRoute("/_authenticated/reminders")({ component: R
 type R = { id: string; lead_id: string; reminder_at: string; note: string | null; is_done: boolean; leads?: { name: string } | null };
 
 function Reminders() {
-  const { user } = useAuth();
+  const { session } = useAuth();
+  const listRemindersOnServer = useServerFn(listReminders);
+  const toggleReminderOnServer = useServerFn(toggleReminder);
   const [items, setItems] = useState<R[]>([]);
   const load = async () => {
-    if (!user) return;
-    const { data } = await supabase.from("reminders").select("*, leads(name)").eq("agent_id", user.id).order("reminder_at");
-    setItems((data || []) as R[]);
+    if (!session?.access_token) return;
+    const data = await listRemindersOnServer({ data: { accessToken: session.access_token } });
+    setItems(data as R[]);
   };
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [user]);
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [session?.access_token]);
 
-  const toggle = async (r: R) => { await supabase.from("reminders").update({ is_done: !r.is_done }).eq("id", r.id); load(); };
+  const toggle = async (r: R) => {
+    if (!session?.access_token) return;
+    await toggleReminderOnServer({ data: { accessToken: session.access_token, reminderId: r.id, is_done: !r.is_done } });
+    load();
+  };
 
   return (
     <div className="p-6 md:p-8 max-w-4xl mx-auto space-y-6">

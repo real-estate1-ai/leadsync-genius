@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
-import { supabase } from "@/integrations/supabase/client";
+import { updateMetaConnection, updateProfile, updateWhatsAppSettings } from "@/lib/app-data.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,7 +14,10 @@ import { Copy, MessageSquare, Megaphone, User } from "lucide-react";
 export const Route = createFileRoute("/_authenticated/settings")({ component: Settings });
 
 function Settings() {
-  const { profile, user, refreshProfile } = useAuth();
+  const { profile, session, user, refreshProfile } = useAuth();
+  const updateProfileOnServer = useServerFn(updateProfile);
+  const updateWhatsAppSettingsOnServer = useServerFn(updateWhatsAppSettings);
+  const updateMetaConnectionOnServer = useServerFn(updateMetaConnection);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [aisensy, setAisensy] = useState("");
@@ -35,25 +39,37 @@ function Settings() {
   const metaUrl = `${origin}/api/public/webhook/meta/${profile.webhook_token}`;
 
   const saveProfile = async () => {
-    const { error } = await supabase.from("profiles").update({ name, phone }).eq("id", user.id);
-    if (error) return toast.error(error.message);
-    toast.success("Profile saved");
-    refreshProfile();
+    if (!session?.access_token) return;
+    try {
+      await updateProfileOnServer({ data: { accessToken: session.access_token, name, phone } });
+      toast.success("Profile saved");
+      refreshProfile();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not save profile");
+    }
   };
 
   const saveAisensy = async () => {
-    const { error } = await supabase.from("profiles").update({ aisensy_api_key: aisensy || null }).eq("id", user.id);
-    if (error) return toast.error(error.message);
-    toast.success("WhatsApp settings saved");
-    refreshProfile();
+    if (!session?.access_token) return;
+    try {
+      await updateWhatsAppSettingsOnServer({ data: { accessToken: session.access_token, aisensy_api_key: aisensy } });
+      toast.success("WhatsApp settings saved");
+      refreshProfile();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not save WhatsApp settings");
+    }
   };
 
   const saveMeta = async (val: boolean) => {
-    const { error } = await supabase.from("profiles").update({ meta_ads_connected: val }).eq("id", user.id);
-    if (error) return toast.error(error.message);
-    setMeta(val);
-    toast.success("Meta connection updated");
-    refreshProfile();
+    if (!session?.access_token) return;
+    try {
+      await updateMetaConnectionOnServer({ data: { accessToken: session.access_token, meta_ads_connected: val } });
+      setMeta(val);
+      toast.success("Meta connection updated");
+      refreshProfile();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not update Meta connection");
+    }
   };
 
   const copy = (t: string) => { navigator.clipboard.writeText(t); toast.success("Copied"); };
